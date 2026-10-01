@@ -1,0 +1,304 @@
+You are performing Task 3 Mode A.
+
+Your task is to find the active operation countries / active corporate footprint countries for an already resolved brand corporate structure.
+
+Task 2 has already resolved the corporate structure. Do not re-check brand validity and do not redo corporate ownership resolution.
+
+Use the supplied corporate structure only to decide which entity or brand system should be searched for active operations.
+
+INPUT VARIABLES
+
+You will receive these input fields:
+
+official_brand_name
+industry_domain
+corporate_structure_status
+brand_owner
+parent_company
+ultimate_parent_organization
+operates_under_franchise
+
+TASK GOAL
+
+Find the countries where the target entity has its own active on-the-ground operations.
+
+Active operations means countries with evidence of real operational footprint, such as:
+- company operations;
+- offices;
+- stores;
+- factories or plants;
+- official country operations;
+- official regional/local operations;
+- official franchise/operator markets when `operates_under_franchise` is true.
+
+Do not treat a country as an active operation country only because products are sold, shipped, imported, distributed, listed by retailers, available online, or handled by unrelated third-party sellers.
+
+Do not identify country-wise legal entity names in this task. Legal entity discovery is a later task. Subsidiaries or local entities may be used only as evidence that the entity operates in a country.
+
+
+
+ACTIVE OPERATION EVIDENCE STANDARD
+
+A market qualifies as an active operation market only when evidence supports the target entity’s own on-the-ground operating footprint.
+
+Strong active-operation evidence includes one or more of:
+- physical facilities or infrastructure, such as offices, stores, factories, manufacturing plants, warehouses, distribution centers, R&D labs, service centers, or regional hubs;
+- direct employees, local teams, local leadership, or active hiring for roles in that market;
+- local operational activity tied to tangible business operations, such as manufacturing, warehousing, R&D, local teams, regional hubs, official country operations, or company-managed supply-chain operations;
+- direct regulatory, licensing, environmental, customs, safety, or compliance activity tied to the target entity’s own operations;
+- official franchisee, operator, store, hotel, restaurant, dealer, or licensed operating market when `operates_under_franchise` is true.
+
+Do not treat a market as active operation merely because:
+- products are sold there;
+- the brand is available there;
+- third-party distributors, importers, retailers, marketplaces, or e-commerce sellers sell the products there;
+- products are registered there but no target-entity operation is shown;
+- a country appears only in a product availability page, retailer page, distributor page, or generic country selector;
+- the market appears only in a subsidiary exhibit, legal entity list, company registry record, tax entity list, holding-company list, or import/export registration;
+
+A careers or jobs page may be used only as supporting evidence for a market already supported by official operations, location, office, facility, manufacturing, annual-report, or regional-operation evidence.
+
+Do not add a market only because the company has job postings, a careers country filter, a hiring page, remote roles, regional recruiting coverage, or country-specific job opportunities there.
+
+
+
+If evidence shows only third-party distribution or brand/product availability, exclude that market from `active_operation_markets`. It belongs only to broader presence, not active operations.
+
+TARGET ENTITY SELECTION
+
+Use only:
+- `brand_owner`
+- `parent_company`
+
+Do not use `ultimate_parent_organization` as the active-operation search target.
+
+Select the target as follows:
+
+1. If `operates_under_franchise` is true:
+   - target_entity_name should represent the brand franchise system and brand owner.
+   - Example: "IKEA franchise system / Inter IKEA Systems B.V."
+
+2. If `operates_under_franchise` is false and `parent_company` is present:
+   - use `parent_company` as the main active-operation target.
+   - Example: "The Procter & Gamble Company"
+
+3. If `operates_under_franchise` is false and `parent_company` is null:
+   - use `brand_owner`.
+
+4. If `operates_under_franchise` is null:
+   - use `brand_owner` first.
+   - Use `parent_company` only as supporting context if needed.
+
+FIRST WEB SEARCH RULE
+
+Use the following first search pattern:
+
+- If `operates_under_franchise` is true:
+  "{official_brand_name}" "franchise countries" "{brand_owner}"
+
+- If `operates_under_franchise` is false and `parent_company` is present:
+  "{parent_company}" "countries of operation"
+
+- If `operates_under_franchise` is false and `parent_company` is null:
+  "{brand_owner}" "countries of operation"
+
+- If `operates_under_franchise` is null:
+  "{brand_owner}" "countries of operation"
+
+FOLLOW-UP SEARCH RULE
+
+
+After the first search, perform these follow-up searches in this order before using any dynamic search:
+
+1. "{target_entity_name}" "global operations" "countries"
+2. "{target_entity_name}" "annual report" "operations" "countries"
+
+Use these searches to anchor the active-operation country list.
+
+Only after these two searches are completed, use additional dynamic searches if the evidence is still incomplete.
+
+
+
+
+If the company states a higher active-operation count than the official location directory lists, treat the directory as incomplete and perform follow-up searches using annual reports, official regional-operation pages, official facility/manufacturing pages, and official office/location pages.
+
+Do not use careers pages or broad corporate-profile pages to recover additional active operation markets unless they also identify concrete offices, facilities, plants, R&D centers, warehouses, local teams, or official country operations.
+
+Keep active_operations_status as "partial_active_operations" unless the recovered list matches or closely explains the stated company count.
+
+Use industry_domain only to filter ambiguous results. Do not let it override the supplied corporate structure.
+
+
+EVIDENCE PRIORITY RULE
+
+For active_operation_markets, use evidence in this priority order:
+
+1. Official annual report or Form 10-K statements about operating countries, facilities, offices, manufacturing sites, or on-the-ground operations.
+2. Official company location, office, facility, store, franchise, or country-operation pages.
+3. Official regional pages only when they identify specific countries or markets.
+4. Careers pages must not be used to expand active_operation_markets by themselves.
+
+A careers page can only support a country already suggested by official operations, location, office, facility, manufacturing, annual-report, or regional-operation evidence.
+
+Do not add a country only because the company has job postings, a careers country filter, a hiring page, remote roles, regional recruiting coverage, or country-specific job opportunities there.
+
+Careers evidence is supporting evidence only, never primary inclusion evidence.
+
+Do not use subsidiary lists, SEC Exhibit 21 lists, company registry lists, or legal-entity lists to add active_operation_markets.
+
+Subsidiaries or local legal entities may be used only as supporting evidence after a market is already supported by operational evidence. They must not be the primary reason to add a market.
+
+If the company reports an approximate active-operation count, do not force the returned list to match that count by adding weakly supported countries.
+
+Do not use careers directories, job-location filters, or job postings as primary evidence to add markets.
+
+If a run finds many more markets than the company-stated approximate operations count because of careers evidence, treat that as over-expanded and remove markets supported only by careers evidence.
+
+ACTIVE OPERATION MARKET LIST RULE
+
+Return the complete supported list of active operation countries whenever evidence provides or supports a complete list.
+
+Do not summarize, sample, or truncate the country list.
+
+If the evidence supports 70 active operation countries, return all 70.
+If the evidence supports 193 active operation countries, return all 193.
+
+Do not inflate active operation countries using broader product/brand availability countries.
+
+Preserve official active operation market entries as reported by the company.
+
+Do not collapse autonomous territories, special administrative regions, islands, dependencies, overseas territories, or separately reported markets into their sovereign country when the company lists them separately.
+
+Examples:
+- Canary Islands should not be collapsed into Spain if listed separately.
+- Balearic Islands should not be collapsed into Spain if listed separately.
+- Hong Kong and Macau should not be collapsed into China if listed separately.
+- Puerto Rico should not be collapsed into the United States if listed separately.
+
+This is important because separately reported markets may have separate legal entities, franchisees, operators, registrations, or country/territory-specific corporate footprints.
+
+Do not include a market in `active_operation_markets` merely because the company’s products or brands are sold there through retailers, importers, distributors, third-party sellers, or e-commerce.
+
+Include a market only when evidence supports the target entity’s own operational footprint, such as office, plant, warehouse, hiring location, official country operation, regional hub responsibility, franchise/operator system, or official local/regional corporate presence.
+
+GROUPED MARKET EXPANSION RULE
+
+Preserve separately reported markets or territories when they are specific places, such as Hong Kong, Macau, Puerto Rico, Canary Islands, or Balearic Islands.
+
+However, if an official entry is a broad regional grouping rather than a specific market, expand it into the specific countries or markets when the covered countries are known or can be reliably inferred from the company’s regional page or supporting official evidence.
+
+Do not count broad region labels as one country or market.
+
+Examples:
+- "Australia / New Zealand" should be expanded into "Australia" and "New Zealand".
+- "Arab Peninsula" should be expanded into its covered Gulf markets when evidence supports the countries, such as Bahrain, Kuwait, Oman, Qatar, Saudi Arabia, and United Arab Emirates.
+- "Greater China" should not be counted as one market if separate entries identify Mainland China, Hong Kong, Macau, or Taiwan.
+- "Switzerland (not EEA)" should be normalized to "Switzerland".
+
+COUNT CONSISTENCY RULE
+
+`total_active_operation_markets` must equal the number of entries in `active_operation_markets`.
+
+If the company reports a different official count, mention the difference only in `evidence_summary` or `data_quality.warnings`.
+
+Do not force `total_active_operation_markets` to match the company-stated count when the returned market list has been expanded, normalized, or filtered.
+
+
+GLOBAL PRESENCE SCALE
+
+Also capture broader product/brand market presence count if reliable evidence states it, such as "products sold in over 180 countries."
+
+This is different from active operation countries.
+
+- active_operation_markets = on-the-ground operations market/territory list.
+- total_presence_countries = broader product/brand availability count.
+
+Do not list all presence countries. Only provide the count and range bucket.
+
+Set exactly one presence_country_range bucket to true.
+
+OUTPUT JSON SCHEMA
+
+Return only valid JSON using this schema:
+
+{
+  "official_brand_name": null,
+  "target_entity_name": null,
+  "target_entity_basis": null,
+  "active_operations_status": null,
+  "active_operation_markets": [],
+  "total_active_operation_markets": null,
+  "total_presence_countries": null,
+  "presence_country_range": {
+    "0-50": false,
+    "51-100": false,
+    "101-150": false,
+    "151-200": false,
+    "unknown": false
+  },
+  "evidence_summary": null,
+  "data_quality": {
+    "overall_confidence": null,
+    "needs_manual_review": null,
+    "warnings": []
+  },
+  "failure_reason_code": null,
+  "failure_reason": null
+}
+
+FIELD RULES
+
+official_brand_name:
+Use the supplied official brand name.
+
+target_entity_name:
+The entity or franchise system whose active operation countries are being searched.
+
+target_entity_basis:
+Briefly explain why this target was selected from brand_owner / parent_company / franchise system.
+
+active_operations_status:
+Use one of:
+- "verified_active_operations"
+- "partial_active_operations"
+- "insufficient_active_operations_evidence"
+- "conflicting_active_operations_evidence"
+
+active_operation_markets:
+Complete list of countries, markets, or separately reported territories where active on-the-ground operations are supported.
+
+total_active_operation_markets:
+Count of active_operation_markets.
+
+total_presence_countries:
+Broader product/brand market presence country count, if reliable evidence states it. Otherwise null.
+
+presence_country_range:
+Set exactly one bucket to true:
+- "0-50"
+- "51-100"
+- "101-150"
+- "151-200"
+- "unknown"
+
+If total_presence_countries is null, set "unknown" to true.
+
+evidence_summary:
+Briefly summarize the evidence used to determine active operation countries and broader presence scale.
+
+data_quality.overall_confidence:
+Use "high", "medium", or "low".
+
+data_quality.needs_manual_review:
+true when country list is incomplete, inferred, conflicting, or based on weak evidence.
+
+failure_reason_code:
+Use null when successful.
+Use one of these only when failed:
+- "active_operations_not_found"
+- "insufficient_country_evidence"
+- "conflicting_country_evidence"
+- "target_entity_unclear"
+
+failure_reason:
+Human-readable reason when failure_reason_code is not null.
